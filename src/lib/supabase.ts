@@ -7,7 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+
+// Definindo o tipo ENUM para o status da mensagem
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read'
 
 export type Database = {
   public: {
@@ -152,10 +155,14 @@ export type Database = {
           room_id: string
           user_id: string
           joined_at: string
+          is_typing: boolean
         }
         Insert: {
           room_id: string
           user_id: string
+        }
+        Update: {
+          is_typing?: boolean
         }
       }
       chat_messages: {
@@ -165,6 +172,8 @@ export type Database = {
           user_id: string
           content: string
           message_type: 'text' | 'image' | 'video'
+          status: MessageStatus
+          read_at: string | null
           created_at: string
         }
         Insert: {
@@ -172,8 +181,16 @@ export type Database = {
           user_id: string
           content: string
           message_type?: 'text' | 'image' | 'video'
+          status?: MessageStatus
+        }
+        Update: {
+          status?: MessageStatus
+          read_at?: string
         }
       }
+    }
+    Enums: {
+      message_status: 'sending' | 'sent' | 'delivered' | 'read'
     }
   }
 }

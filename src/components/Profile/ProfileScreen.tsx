@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Settings, Edit, Heart, MessageSquare, ShoppingBag, LogOut, BarChart3, TrendingUp } from 'lucide-react'
+import { Settings, Edit, Heart, MessageSquare, ShoppingBag, LogOut, BarChart3, TrendingUp, MapPin, Phone } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -13,6 +13,7 @@ export function ProfileScreen() {
     likesReceived: 0
   })
   const [loading, setLoading] = useState(true)
+  const [seeding, setSeeding] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -82,7 +83,7 @@ export function ProfileScreen() {
   const handleGenerateSampleData = async () => {
     if (!user) return
     
-    setLoading(true)
+    setSeeding(true)
     try {
       const success = await seedDatabase(user.id)
       if (success) {
@@ -95,7 +96,7 @@ export function ProfileScreen() {
       console.error('Error generating sample data:', error)
       alert('Erro ao criar dados de exemplo.')
     } finally {
-      setLoading(false)
+      setSeeding(false)
     }
   }
 
@@ -168,8 +169,17 @@ export function ProfileScreen() {
             <div className="flex-1">
               <h1 className="text-xl font-bold">{profile?.full_name || 'Usuário'}</h1>
               <p className="text-blue-100 text-sm">@{profile?.username || 'username'}</p>
-              <div className="flex items-center space-x-1 mt-1">
-                <span className="text-blue-100 text-sm">📍 {profile?.location || 'Juiz de Fora, MG'}</span>
+              <div className="flex items-center space-x-4 mt-1">
+                <span className="text-blue-100 text-sm flex items-center space-x-1">
+                  <MapPin size={14} />
+                  <span>{profile?.location || 'Juiz de Fora, MG'}</span>
+                </span>
+                {profile?.phone && (
+                  <span className="text-blue-100 text-sm flex items-center space-x-1">
+                    <Phone size={14} />
+                    <span>{profile.phone}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -229,7 +239,7 @@ export function ProfileScreen() {
                 <motion.button
                   key={index}
                   onClick={item.action}
-                  disabled={loading && item.label === 'Gerar dados de exemplo'}
+                  disabled={seeding && item.label === 'Gerar dados de exemplo'}
                   className={`w-full flex items-center space-x-3 p-4 hover:bg-gray-50 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                     item.destructive ? 'hover:bg-red-50' : ''
                   }`}
@@ -250,11 +260,11 @@ export function ProfileScreen() {
                     </span>
                     {item.label === 'Gerar dados de exemplo' && (
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Cria notícias e produtos para testar o app
+                        Cria notícias e produtos para o seu usuário.
                       </p>
                     )}
                   </div>
-                  {loading && item.label === 'Gerar dados de exemplo' && (
+                  {seeding && item.label === 'Gerar dados de exemplo' && (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
                   )}
                 </motion.button>

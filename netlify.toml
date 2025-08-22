@@ -1,0 +1,19 @@
+# Arquivo de configuração do Netlify para o projeto Vite + React
+
+[build]
+  # Comando para instalar dependências com yarn e construir o site.
+  command = "yarn && yarn build"
+
+  # Diretório onde os arquivos do site construído são armazenados.
+  publish = "dist"
+
+[build.environment]
+  # Especifica uma versão recente e estável do Node.js para o build.
+  NODE_VERSION = "18"
+
+# Regra de redirecionamento para Single Page Applications (SPA).
+# Isso garante que todas as rotas sejam tratadas pelo React Router no lado do cliente.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

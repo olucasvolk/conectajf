@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Heart, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
@@ -24,13 +25,19 @@ interface ProductCardProps {
 
 export function ProductCard({ product, isLiked, onLike }: ProductCardProps) {
   const [liked, setLiked] = useState(isLiked)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setLiked(isLiked)
   }, [isLiked])
 
-  const handleLike = () => {
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent navigation when liking
     onLike(product.id)
+  }
+
+  const handleCardClick = () => {
+    navigate(`/marketplace/${product.id}`)
   }
 
   const getConditionColor = (condition: string) => {
@@ -48,9 +55,8 @@ export function ProductCard({ product, isLiked, onLike }: ProductCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+      onClick={handleCardClick}
+      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
     >
       {/* Image placeholder */}
       <div className="aspect-square bg-gray-100 flex items-center justify-center">

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
@@ -27,10 +27,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionLoading, setSessionLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
 
-  // Effect 1: Handle user session changes from Supabase Auth
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
+  }, [])
+
+  // Effect 1: Handle user session changes and detect malformed JWTs
   useEffect(() => {
     setSessionLoading(true)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // This logic helps detect and handle a malformed JWT stored in localStorage.
+      if (session?.access_token) {
+        try {
+          // Attempt to decode the token payload. If it fails, the token is malformed.
+          JSON.parse(atob(session.access_token.split('.')[1]));
+        } catch (e) {
+          console.error('Malformed JWT detected, forcing sign out.', e);
+          await signOut();
+          setSessionLoading(false);
+          return;
+        }
+      }
+      
       setUser(session?.user ?? null)
       setSessionLoading(false)
     })
@@ -38,9 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [signOut])
 
-  // Effect 2: Fetch profile data when a user is logged in
+  // Effect 2: Fetch profile data and handle authentication errors during fetch
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
@@ -50,10 +69,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .from('profiles')
             .select('*')
             .eq('id', user.id)
+            .single()
 
-          if (error) throw error
+          if (error) {
+            // If the token is invalid, Supabase might return an auth error.
+            // This will force a sign-out to clear the invalid session.
+            if (error.code === 'PGRST301' || error.message.includes('JWT') || error.message.includes('invalid token')) {
+              console.error('Authentication error while fetching profile. Signing out.', error)
+              await signOut()
+              return
+            }
+            throw error
+          }
           
-          setProfile(data?.[0] || null)
+          setProfile(data || null)
         } catch (error) {
           console.error('Error fetching profile:', error)
           setProfile(null)
@@ -66,12 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetchProfile()
-  }, [user])
+  }, [user, signOut])
 
   async function signUp(email: string, password: string, userData: any) {
-    // FIX: The profile creation is now handled by a database trigger.
-    // We pass the user data in the `options.data` field, which the trigger
-    // can access via `new.raw_user_meta_data`.
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -85,8 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (error) throw error
-
-    // The manual profile insertion is no longer needed here.
     return data
   }
 
@@ -96,11 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password
     })
     return { data, error }
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut()
-    setProfile(null)
   }
 
   const value = {

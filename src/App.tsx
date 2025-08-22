@@ -5,6 +5,7 @@ import { AuthForm } from './components/Auth/AuthForm'
 import { BottomNavigation } from './components/Layout/BottomNavigation'
 import { FeedScreen } from './components/Feed/FeedScreen'
 import { MarketplaceScreen } from './components/Marketplace/MarketplaceScreen'
+import { ProductDetailScreen } from './components/Marketplace/ProductDetailScreen'
 import { ChatScreen } from './components/Chat/ChatScreen'
 import { NewChatScreen } from './components/Chat/NewChatScreen'
 import { ChatRoomScreen } from './components/Chat/ChatRoomScreen'
@@ -75,6 +76,7 @@ function AppContent() {
         >
           <Route index element={<FeedScreen />} />
           <Route path="marketplace" element={<MarketplaceScreen />} />
+          <Route path="marketplace/:productId" element={<ProductDetailScreen />} />
           <Route path="chat" element={<ChatScreen />} />
           <Route path="chat/new" element={<NewChatScreen />} />
           <Route path="chat/:roomId" element={<ChatRoomScreen />} />

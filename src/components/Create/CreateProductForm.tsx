@@ -9,6 +9,7 @@ interface CreateProductFormProps {
 }
 
 export function CreateProductForm({ onSuccess }: CreateProductFormProps) {
+  const { user, profile } = useAuth()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -16,9 +17,9 @@ export function CreateProductForm({ onSuccess }: CreateProductFormProps) {
     condition: 'usado',
     category: 'outros'
   })
+  const [phone, setPhone] = useState(profile?.phone || '')
   const [loading, setLoading] = useState(false)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
-  const { user, profile } = useAuth()
 
   const conditions = [
     { id: 'novo', label: 'Novo' },
@@ -60,6 +61,20 @@ export function CreateProductForm({ onSuccess }: CreateProductFormProps) {
 
     setLoading(true)
     try {
+      // Step 1: Update user's phone number if it's new or changed
+      if (phone && phone !== profile.phone) {
+        const { error: phoneError } = await supabase
+          .from('profiles')
+          .update({ phone: phone })
+          .eq('id', user.id)
+        
+        if (phoneError) {
+          // Don't block product creation, just log the error
+          console.error('Could not update phone number:', phoneError)
+        }
+      }
+
+      // Step 2: Insert the product
       const { data, error } = await supabase
         .from('marketplace_products')
         .insert([{
@@ -171,6 +186,24 @@ export function CreateProductForm({ onSuccess }: CreateProductFormProps) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           required
         />
+      </div>
+
+      {/* Phone Number */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Telefone para contato (WhatsApp)
+        </label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="(XX) 9XXXX-XXXX"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Seu número será compartilhado apenas com compradores interessados.
+        </p>
       </div>
 
       {/* Media Upload */}

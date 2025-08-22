@@ -17,8 +17,10 @@ export function BottomNavigation({ onCreatePost }: BottomNavigationProps) {
     { id: 'profile', icon: User, label: 'Perfil', path: '/profile' }
   ]
 
-  // Hide navigation on specific sub-routes like a chat room
-  if (location.pathname.startsWith('/chat/')) {
+  // Hide navigation on specific sub-routes like a chat room or product detail
+  const isDetailPage = location.pathname.startsWith('/chat/') || (location.pathname.startsWith('/marketplace/') && location.pathname !== '/marketplace');
+
+  if (isDetailPage) {
     return null;
   }
 
