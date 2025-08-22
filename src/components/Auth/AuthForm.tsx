@@ -28,7 +28,7 @@ export function AuthForm() {
         if (error) throw error
       } else {
         if (!formData.username || !formData.full_name) {
-          throw new Error('Preencha todos os campos')
+          throw new Error('Preencha todos os campos para criar a conta.')
         }
         await signUp(formData.email, formData.password, {
           username: formData.username,
@@ -36,7 +36,13 @@ export function AuthForm() {
         })
       }
     } catch (err: any) {
-      setError(err.message)
+      if (err.message?.includes('Database error saving new user')) {
+        setError('Ocorreu um erro ao criar seu perfil. Por favor, tente novamente em instantes.');
+      } else if (err.message?.includes('User already registered')) {
+        setError('Este email já está cadastrado. Tente fazer login.');
+      } else {
+        setError(err.message || 'Ocorreu um erro. Verifique os dados e tente novamente.');
+      }
     } finally {
       setLoading(false)
     }
@@ -129,7 +135,7 @@ export function AuthForm() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm whitespace-pre-wrap">
               {error}
             </div>
           )}

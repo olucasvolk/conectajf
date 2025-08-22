@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .from('profiles')
             .select('*')
             .eq('id', user.id)
-            .single()
+            .maybeSingle() // FIX: Changed from .single() to handle cases where profile might not exist yet
 
           if (error) {
             // If the token is invalid, Supabase might return an auth error.
